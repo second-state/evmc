@@ -161,7 +161,7 @@ struct evmc_tx_context
  * The opaque data type representing the Host execution context.
  * @see evmc_execute_fn().
  */
-struct evmc_host_context;
+struct evmc_host_context {};
 
 /**
  * Get transaction context callback function.
