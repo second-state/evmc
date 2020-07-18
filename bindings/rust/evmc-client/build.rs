@@ -14,16 +14,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pub use evmc_sys as ffi;
+use std::path::Path;
+extern crate cmake;
+use cmake::Config;
 
-pub const ADDRESS_LENGTH: usize = 20;
-pub const BYTES32_LENGTH: usize = 32;
-pub type Address = [u8; ADDRESS_LENGTH];
-pub type Bytes32 = [u8; BYTES32_LENGTH];
-pub type Bytes = [u8];
+fn build_link_evmc_tools() {
+    let dst = Config::new("../../../").build();
+    let evmc_path = Path::new(&dst).join("build/lib/loader");
+    println!("cargo:rustc-link-search=native={}", evmc_path.display());
+    println!("cargo:rustc-link-lib=static=evmc-loader");
+}
 
-pub type StorageStatus = ffi::evmc_storage_status;
-pub type CallKind = ffi::evmc_call_kind;
-pub type Revision = ffi::evmc_revision;
-pub type StatusCode = ffi::evmc_status_code;
-pub type Capabilities = ffi::evmc_capabilities;
+fn main() {
+    build_link_evmc_tools();
+}

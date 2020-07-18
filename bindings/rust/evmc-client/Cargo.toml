@@ -1,5 +1,5 @@
 # EVMC: Ethereum Client-VM Connector API.
-# Copyright 2019 The Second State Company.
+# Copyright 2020 The Second State Company.
 # Licensed under the GNU Affero General Public License, Version 3.0.
 
 [package]
@@ -10,8 +10,13 @@ license = "AGPL-3.0"
 repository = "https://github.com/second-state/evmc"
 description = "Bindings to EVMC (Client/Host specific)"
 edition = "2018"
+build = "build.rs"
 
 [dependencies]
 evmc-sys = { path = "../evmc-sys" }
-libloading = "0.5"
+enum_primitive = "0.1.1"
+num = "0.3"
 lazy_static = "1.4.0"
+
+[build-dependencies]
+cmake = "0.1.44"

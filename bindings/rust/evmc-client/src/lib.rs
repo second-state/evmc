@@ -1,12 +1,12 @@
 // Copyright (C) 2020 Second State.
-// This file is part of Rust-SSVM.
+// This file is part of EVMC-Client.
 
-// Rust-SSVM is free software: you can redistribute it and/or modify
+// EVMC-Client is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
 
-// Rust-SSVM is distributed in the hope that it will be useful,
+// EVMC-Client is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
@@ -14,38 +14,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#[macro_use]
+extern crate enum_primitive;
 pub mod host;
 mod loader;
 pub mod types;
-pub use self::loader::EvmcLoaderErrorCode;
-
-use crate::loader::evmc_load_and_create;
+pub use crate::loader::{load_and_create, EvmcLoaderErrorCode};
 use crate::types::*;
 use evmc_sys as ffi;
 use std::ffi::CStr;
 
 extern "C" {
     fn evmc_create() -> *mut ffi::evmc_instance;
-}
-
-fn error(err: EvmcLoaderErrorCode) -> Result<EvmcLoaderErrorCode, &'static str> {
-    match err {
-        EvmcLoaderErrorCode::EvmcLoaderSucces => Ok(EvmcLoaderErrorCode::EvmcLoaderSucces),
-        EvmcLoaderErrorCode::EvmcLoaderCannotOpen => Err("evmc loader: library cannot open"),
-        EvmcLoaderErrorCode::EvmcLoaderSymbolNotFound => {
-            Err("evmc loader: the EVMC create function not found")
-        }
-        EvmcLoaderErrorCode::EvmcLoaderInvalidArgument => {
-            panic!("evmc loader: filename argument is invalid")
-        }
-        EvmcLoaderErrorCode::EvmcLoaderInstanceCreationFailure => {
-            Err("evmc loader: VM instance creation failure")
-        }
-        EvmcLoaderErrorCode::EvmcLoaderAbiVersionMismatch => {
-            Err("evmc loader: ABI version mismatch")
-        }
-        _ => Err("evmc loader: unexpected error"),
-    }
 }
 
 pub struct EvmcVm {
@@ -155,13 +135,13 @@ impl EvmcVm {
 }
 
 pub fn load(fname: &str) -> (EvmcVm, Result<EvmcLoaderErrorCode, &'static str>) {
-    let (instance, ec) = evmc_load_and_create(fname);
+    let (instance, ec) = load_and_create(fname);
     (
         EvmcVm {
             handle: instance,
             host_interface: Box::into_raw(Box::new(host::get_evmc_host_interface())),
         },
-        error(ec),
+        ec,
     )
 }
 

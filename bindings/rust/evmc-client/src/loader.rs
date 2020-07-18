@@ -1,12 +1,12 @@
 // Copyright (C) 2020 Second State.
-// This file is part of Rust-SSVM.
+// This file is part of EVMC-Client.
 
-// Rust-SSVM is free software: you can redistribute it and/or modify
+// EVMC-Client is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as
 // published by the Free Software Foundation, either version 3 of the
 // License, or (at your option) any later version.
 
-// Rust-SSVM is distributed in the hope that it will be useful,
+// EVMC-Client is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Affero General Public License for more details.
@@ -15,12 +15,22 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use evmc_sys as ffi;
-use libloading::{Library, Symbol};
-use std::ptr;
+use std::ffi::{CStr, CString};
+use std::os::raw::c_char;
 use std::str;
+extern crate num;
+use num::FromPrimitive;
 
-type EvmcCreate = extern "C" fn() -> *mut ffi::evmc_instance;
+#[link(name = "evmc-loader")]
+extern "C" {
+    fn evmc_load_and_create(
+        filename: *const c_char,
+        evmc_loader_error_code: *mut i32,
+    ) -> *mut ffi::evmc_instance;
+    fn evmc_last_error_msg() -> *const c_char;
+}
 
+enum_from_primitive! {
 #[derive(Debug)]
 pub enum EvmcLoaderErrorCode {
     /** The loader succeeded. */
@@ -47,39 +57,28 @@ pub enum EvmcLoaderErrorCode {
     /** The VM option value is invalid. */
     EvmcLoaderInvalidOptionValue = 7,
 }
+}
 
-pub fn evmc_load_and_create(fname: &str) -> (*mut ffi::evmc_instance, EvmcLoaderErrorCode) {
+fn error(err: EvmcLoaderErrorCode) -> Result<EvmcLoaderErrorCode, &'static str> {
+    match err {
+        EvmcLoaderErrorCode::EvmcLoaderSucces => Ok(EvmcLoaderErrorCode::EvmcLoaderSucces),
+        _ => unsafe { Err(CStr::from_ptr(evmc_last_error_msg()).to_str().unwrap()) },
+    }
+}
+
+pub fn load_and_create(
+    fname: &str,
+) -> (
+    *mut ffi::evmc_instance,
+    Result<EvmcLoaderErrorCode, &'static str>,
+) {
+    let c_str = CString::new(fname).unwrap();
     unsafe {
-        let mut instance: *mut ffi::evmc_instance = ptr::null_mut();
-
-        let library: Library = match Library::new(fname) {
-            Ok(lib) => lib,
-            Err(_) => {
-                return (instance, EvmcLoaderErrorCode::EvmcLoaderCannotOpen);
-            }
-        };
-
-        let evmc_create_fn: Symbol<EvmcCreate> = match library.get(b"evmc_create\0") {
-            Ok(symbol) => symbol,
-            Err(_) => {
-                return (instance, EvmcLoaderErrorCode::EvmcLoaderSymbolNotFound);
-            }
-        };
-
-        instance = evmc_create_fn();
-
-        if instance.is_null() {
-            return (
-                instance,
-                EvmcLoaderErrorCode::EvmcLoaderInstanceCreationFailure,
-            );
-        }
-
-        if (*instance).abi_version
-            != std::mem::transmute::<ffi::_bindgen_ty_1, i32>(ffi::EVMC_ABI_VERSION)
-        {
-            return (instance, EvmcLoaderErrorCode::EvmcLoaderAbiVersionMismatch);
-        }
-        return (instance, EvmcLoaderErrorCode::EvmcLoaderSucces);
+        let mut error_code: i32 = 0;
+        let instance = evmc_load_and_create(c_str.as_ptr() as *const c_char, &mut error_code);
+        return (
+            instance,
+            error(EvmcLoaderErrorCode::from_i32(error_code).unwrap()),
+        );
     }
 }
