@@ -61,7 +61,7 @@ impl EvmcVm {
 
     pub fn execute(
         &self,
-        ctx: Box<dyn host::HostContext + Send + Sync>,
+        ctx: &mut dyn host::HostContext,
         rev: Revision,
         kind: CallKind,
         is_static: bool,
@@ -74,15 +74,12 @@ impl EvmcVm {
         code: &Bytes,
         create2_salt: &Bytes32,
     ) -> (&Bytes, i64, StatusCode) {
-        let mut ext_ctx: host::ExtendedContext;
-        unsafe {
-            ext_ctx = host::ExtendedContext {
-                context: ffi::evmc_context {
-                    host: self.host_interface,
-                },
-                index: host::add_host_context(ctx),
-            };
-        }
+        let mut ext_ctx = host::ExtendedContext {
+            context: ffi::evmc_context {
+                host: self.host_interface,
+            },
+            hctx: ctx,
+        };
         let mut evmc_flags: u32 = 0;
         unsafe {
             if is_static {
@@ -117,7 +114,6 @@ impl EvmcVm {
                 code.as_ptr(),
                 code.len(),
             );
-            host::remove_host_context(ext_ctx.index);
             return (
                 std::slice::from_raw_parts(result.output_data, result.output_size),
                 result.gas_left,

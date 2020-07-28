@@ -16,35 +16,12 @@
 
 use crate::types::*;
 use evmc_sys as ffi;
-use lazy_static::lazy_static;
-use std::collections::HashMap;
 use std::mem;
-use std::sync::Mutex;
 
 #[repr(C)]
-pub(crate) struct ExtendedContext {
+pub(crate) struct ExtendedContext<'a> {
     pub context: ffi::evmc_context,
-    pub index: i64,
-}
-
-static mut HOST_CONTEXT_COUNTER: i64 = 0;
-
-lazy_static! {
-    static ref HOST_CONTEXT_MAP: Mutex<HashMap<i64, Box<dyn HostContext + Send + Sync>>> =
-        Mutex::new(HashMap::new());
-}
-
-pub(crate) unsafe fn add_host_context(ctx: Box<dyn HostContext + Send + Sync>) -> i64 {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let id = HOST_CONTEXT_COUNTER;
-    HOST_CONTEXT_COUNTER += 1;
-    map.insert(id, ctx);
-    return id;
-}
-
-pub(crate) fn remove_host_context(id: i64) {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    map.remove(&id);
+    pub hctx: &'a mut dyn HostContext,
 }
 
 pub trait HostContext {
@@ -99,11 +76,9 @@ unsafe extern "C" fn account_exists(
     context: *mut ffi::evmc_context,
     address: *const ffi::evmc_address,
 ) -> bool {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
-    return host_interface.account_exists(&(*address).bytes);
+    return (*(context as *mut ExtendedContext))
+        .hctx
+        .account_exists(&(*address).bytes);
 }
 
 unsafe extern "C" fn get_storage(
@@ -111,12 +86,10 @@ unsafe extern "C" fn get_storage(
     address: *const ffi::evmc_address,
     key: *const ffi::evmc_bytes32,
 ) -> ffi::evmc_bytes32 {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
     return ffi::evmc_bytes32 {
-        bytes: host_interface.get_storage(&(*address).bytes, &(*key).bytes),
+        bytes: (*(context as *mut ExtendedContext))
+            .hctx
+            .get_storage(&(*address).bytes, &(*key).bytes),
     };
 }
 
@@ -126,23 +99,21 @@ unsafe extern "C" fn set_storage(
     key: *const ffi::evmc_bytes32,
     value: *const ffi::evmc_bytes32,
 ) -> ffi::evmc_storage_status {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
-    return host_interface.set_storage(&(*address).bytes, &(*key).bytes, &(*value).bytes);
+    return (*(context as *mut ExtendedContext)).hctx.set_storage(
+        &(*address).bytes,
+        &(*key).bytes,
+        &(*value).bytes,
+    );
 }
 
 unsafe extern "C" fn get_balance(
     context: *mut ffi::evmc_context,
     address: *const ffi::evmc_address,
 ) -> ffi::evmc_uint256be {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
     return ffi::evmc_uint256be {
-        bytes: host_interface.get_balance(&(*address).bytes),
+        bytes: (*(context as *mut ExtendedContext))
+            .hctx
+            .get_balance(&(*address).bytes),
     };
 }
 
@@ -150,23 +121,19 @@ unsafe extern "C" fn get_code_size(
     context: *mut ffi::evmc_context,
     address: *const ffi::evmc_address,
 ) -> usize {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
-    return host_interface.get_code_size(&(*address).bytes);
+    return (*(context as *mut ExtendedContext))
+        .hctx
+        .get_code_size(&(*address).bytes);
 }
 
 unsafe extern "C" fn get_code_hash(
     context: *mut ffi::evmc_context,
     address: *const ffi::evmc_address,
 ) -> ffi::evmc_bytes32 {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
     return ffi::evmc_bytes32 {
-        bytes: host_interface.get_code_hash(&(*address).bytes),
+        bytes: (*(context as *mut ExtendedContext))
+            .hctx
+            .get_code_hash(&(*address).bytes),
     };
 }
 
@@ -177,11 +144,12 @@ unsafe extern "C" fn copy_code(
     buffer_data: *mut u8,
     buffer_size: usize,
 ) -> usize {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
-    return host_interface.copy_code(&(*address).bytes, &code_offset, &buffer_data, &buffer_size);
+    return (*(context as *mut ExtendedContext)).hctx.copy_code(
+        &(*address).bytes,
+        &code_offset,
+        &buffer_data,
+        &buffer_size,
+    );
 }
 
 unsafe extern "C" fn selfdestruct(
@@ -189,20 +157,14 @@ unsafe extern "C" fn selfdestruct(
     address: *const ffi::evmc_address,
     beneficiary: *const ffi::evmc_address,
 ) {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
-    host_interface.selfdestruct(&(*address).bytes, &(*beneficiary).bytes)
+    (*(context as *mut ExtendedContext))
+        .hctx
+        .selfdestruct(&(*address).bytes, &(*beneficiary).bytes)
 }
 
 unsafe extern "C" fn get_tx_context(context: *mut ffi::evmc_context) -> ffi::evmc_tx_context {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
     let (gas_price, origin, coinbase, number, timestamp, gas_limit, difficulty) =
-        host_interface.get_tx_context();
+        (*(context as *mut ExtendedContext)).hctx.get_tx_context();
     return ffi::evmc_tx_context {
         tx_gas_price: ffi::evmc_bytes32 { bytes: gas_price },
         tx_origin: ffi::evmc_address { bytes: origin },
@@ -218,12 +180,10 @@ unsafe extern "C" fn get_block_hash(
     context: *mut ffi::evmc_context,
     number: i64,
 ) -> ffi::evmc_bytes32 {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
     return ffi::evmc_bytes32 {
-        bytes: host_interface.get_block_hash(number),
+        bytes: (*(context as *mut ExtendedContext))
+            .hctx
+            .get_block_hash(number),
     };
 }
 
@@ -235,15 +195,11 @@ unsafe extern "C" fn emit_log(
     topics: *const ffi::evmc_bytes32,
     topics_count: usize,
 ) {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
     let ts = &std::slice::from_raw_parts(topics, topics_count)
         .iter()
         .map(|topic| topic.bytes)
         .collect::<Vec<_>>();
-    host_interface.emit_log(
+    (*(context as *mut ExtendedContext)).hctx.emit_log(
         &(*address).bytes,
         &ts,
         &std::slice::from_raw_parts(data, data_size),
@@ -261,21 +217,18 @@ pub unsafe extern "C" fn call(
     context: *mut ffi::evmc_context,
     msg: *const ffi::evmc_message,
 ) -> ffi::evmc_result {
-    let mut map = HOST_CONTEXT_MAP.lock().unwrap();
-    let host_interface = map
-        .get_mut(&(*(context as *const ExtendedContext)).index)
-        .unwrap();
     let msg = *msg;
-    let (output, gas_left, create_address, status_code) = host_interface.call(
-        msg.kind,
-        &msg.destination.bytes,
-        &msg.sender.bytes,
-        &msg.value.bytes,
-        &std::slice::from_raw_parts(msg.input_data, msg.input_size),
-        msg.gas,
-        msg.depth,
-        msg.flags != 0,
-    );
+    let (output, gas_left, create_address, status_code) =
+        (*(context as *mut ExtendedContext)).hctx.call(
+            msg.kind,
+            &msg.destination.bytes,
+            &msg.sender.bytes,
+            &msg.value.bytes,
+            &std::slice::from_raw_parts(msg.input_data, msg.input_size),
+            msg.gas,
+            msg.depth,
+            msg.flags != 0,
+        );
     let ptr = output.as_ptr();
     let len = output.len();
     mem::forget(output);
