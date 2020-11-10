@@ -4,18 +4,19 @@
 
 [package]
 name = "ssvm-evmc-client"
-version = "6.3.1-rc1"
+version = "6.3.1-rc4"
 authors = ["Zigang Lin <vincent@secondstate.io>"]
-license = "AGPL-3.0"
+license = "Apache-2.0"
 repository = "https://github.com/second-state/evmc"
 description = "Bindings to EVMC (Client/Host specific)"
 edition = "2018"
 build = "build.rs"
 
 [dependencies]
-evmc-sys = { version = "6.3.1-rc1", package = "ssvm-evmc-sys" }
+evmc-sys = { path = "../evmc-sys", version = "6.3.1-rc4", package = "ssvm-evmc-sys" }
 enum_primitive = "0.1.1"
 num = "0.3"
 
 [build-dependencies]
 cmake = "0.1.44"
+

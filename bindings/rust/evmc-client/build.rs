@@ -24,7 +24,7 @@ macro_rules! get(($name:expr) => (ok!(env::var($name))));
 macro_rules! ok(($expression:expr) => ($expression.unwrap()));
 
 const REPOSITORY: &'static str = "https://github.com/second-state/evmc.git";
-const TAG: &'static str = "v6.3.1-rust-evmc-client-rc.3";
+const TAG: &'static str = "6.3.1-rc4-crates";
 
 fn run<F>(name: &str, mut configure: F)
 where

@@ -3,16 +3,16 @@
 # Licensed under the Apache License, Version 2.0.
 
 [package]
-name = "evmc-declare-tests"
-version = "6.3.1"
+name = "ssvm-evmc-declare-tests"
+version = "6.3.1-rc4"
 authors = ["Jake Lang <jak3lang@gmail.com>"]
 license = "Apache-2.0"
-repository = "https://github.com/ethereum/evmc"
+repository = "https://github.com/second-state/evmc"
 description = "Bindings to EVMC (VM declare macro) -- Test crate"
 edition = "2018"
 publish = false
 
 [dependencies]
-evmc-declare = { path = "../evmc-declare" }
-evmc-sys = { version = "6.3.1-rc1", package = "ssvm-evmc-sys" }
-evmc-vm = { path = "../evmc-vm" }
+evmc-declare = { path = "../evmc-declare", version = "6.3.1-rc4", package = "ssvm-evmc-declare" }
+evmc-sys = { path = "../evmc-sys", version = "6.3.1-rc4", package = "ssvm-evmc-sys" }
+evmc-vm = { path = "../evmc-vm", version = "6.3.1-rc4", package = "ssvm-evmc-vm" }
