@@ -3,14 +3,14 @@
 # Licensed under the Apache License, Version 2.0.
 
 [package]
-name = "evmc-client"
+name = "ssvm-evmc-client"
 version = "6.3.1"
 authors = ["Zigang Lin <vincent@secondstate.io>"]
 license = "Apache-2.0"
-repository = "https://github.com/ethereum/evmc"
+repository = "https://github.com/second-state/evmc"
 description = "Bindings to EVMC (Client/Host specific)"
 edition = "2018"
 
 [dependencies]
-evmc-sys = { path = "../evmc-sys" }
+evmc-sys = { version = "6.3.1", package = "ssvm-evmc-sys" }
 libloading = "0.5"
