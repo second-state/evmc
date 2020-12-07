@@ -9,6 +9,6 @@ name = "examplerustvm"
 crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
-evmc-sys = { path = "../../bindings/rust/evmc-sys" }
+evmc-sys = { version = "6.3.1-rc1", package = "ssvm-evmc-sys" }
 evmc-vm = { path = "../../bindings/rust/evmc-vm" }
 evmc-declare = { path = "../../bindings/rust/evmc-declare" }
