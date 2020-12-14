@@ -3,8 +3,8 @@
 # Licensed under the Apache License, Version 2.0.
 
 [package]
-name = "evmc-declare"
-version = "6.3.1"
+name = "ssvm-evmc-declare"
+version = "6.3.1-rc3"
 authors = ["Jake Lang <jak3lang@gmail.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/ethereum/evmc"
@@ -17,7 +17,7 @@ heck = "0.3.1"
 proc-macro2 = "0.4.29"
 
 # For documentation examples
-evmc-vm = { path = "../evmc-vm" }
+evmc-vm = { version = "6.3.1-rc3", package = "ssvm-evmc-vm" }
 
 [dependencies.syn]
 version = "0.15.33"

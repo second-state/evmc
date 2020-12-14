@@ -4,7 +4,7 @@
 
 [package]
 name = "ssvm-evmc-sys"
-version = "6.3.1-rc1"
+version = "6.3.1-rc3"
 authors = ["Alex Beregszaszi <alex@rtfs.hu>"]
 license = "Apache-2.0"
 repository = "https://github.com/second-state/evmc"
