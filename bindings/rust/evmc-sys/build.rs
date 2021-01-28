@@ -28,7 +28,7 @@ fn gen_bindings() {
         .whitelist_type("evmc_.*")
         .whitelist_function("evmc_.*")
         .whitelist_var("EVMC_ABI_VERSION")
-        .clang_arg("--sysroot=/tmp/wasi-sysroot")
+        .clang_args("--sysroot=/tmp/wasi-sysroot -resource-dir /tmp/wasi-sysroot -fuse-ld=/usr/bin/wasm-ld-10 -Wl,--allow-undefined-file=/tmp/wasi-sysroot/share/wasm32-wasi/undefined-symbols.txt")
         // TODO: consider removing this
         .size_t_is_usize(true)
         .generate()
