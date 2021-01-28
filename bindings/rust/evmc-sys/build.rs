@@ -9,6 +9,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn gen_bindings() {
+    let v = vec!["--sysroot=/tmp/wasi-sysroot", "-resource-dir/tmp/wasi-sysroot", "-fuse-ld=/usr/bin/wasm-ld-10", "-Wl,--allow-undefined-file=/tmp/wasi-sysroot/share/wasm32-wasi/undefined-symbols.txt"];
     let bindings = bindgen::Builder::default()
         .header("evmc.h")
         // See https://github.com/rust-lang-nursery/rust-bindgen/issues/947
@@ -28,7 +29,7 @@ fn gen_bindings() {
         .whitelist_type("evmc_.*")
         .whitelist_function("evmc_.*")
         .whitelist_var("EVMC_ABI_VERSION")
-        .clang_args("--sysroot=/tmp/wasi-sysroot -resource-dir /tmp/wasi-sysroot -fuse-ld=/usr/bin/wasm-ld-10 -Wl,--allow-undefined-file=/tmp/wasi-sysroot/share/wasm32-wasi/undefined-symbols.txt")
+        .clang_args(v.into_iter())
         // TODO: consider removing this
         .size_t_is_usize(true)
         .generate()
