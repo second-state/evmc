@@ -28,6 +28,7 @@ fn gen_bindings() {
         .whitelist_type("evmc_.*")
         .whitelist_function("evmc_.*")
         .whitelist_var("EVMC_ABI_VERSION")
+        .clang_arg("--sysroot=/tmp/wasi-sysroot")
         // TODO: consider removing this
         .size_t_is_usize(true)
         .generate()
