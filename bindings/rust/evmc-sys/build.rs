@@ -9,7 +9,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn gen_bindings() {
-    let v = vec!["--sysroot=/tmp/wasi-sysroot", "-resource-dir/tmp/wasi-sysroot", "-fuse-ld=/usr/bin/wasm-ld-10", "-Wl,--allow-undefined-file=/tmp/wasi-sysroot/share/wasm32-wasi/undefined-symbols.txt"];
+    let v = vec!["--sysroot=/tmp/wasi-sysroot", "-Wl,--allow-undefined-file=/tmp/wasi-sysroot/share/wasm32-wasi/undefined-symbols.txt"];
     let bindings = bindgen::Builder::default()
         .header("evmc.h")
         // See https://github.com/rust-lang-nursery/rust-bindgen/issues/947
