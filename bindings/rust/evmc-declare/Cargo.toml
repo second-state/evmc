@@ -3,11 +3,11 @@
 # Licensed under the Apache License, Version 2.0.
 
 [package]
-name = "evmc-declare"
-version = "7.4.0"
+name = "ssvm-evmc-declare"
+version = "7.4.0-rc2"
 authors = ["Jake Lang <jak3lang@gmail.com>", "Alex Beregszaszi <alex@rtfs.hu>"]
 license = "Apache-2.0"
-repository = "https://github.com/ethereum/evmc"
+repository = "https://github.com/secondstate/evmc"
 description = "Bindings to EVMC (VM declare macro)"
 edition = "2018"
 
@@ -17,7 +17,7 @@ heck = "0.3.1"
 proc-macro2 = "1.0"
 syn = { version = "1.0", features = ["full"] }
 # For documentation examples
-evmc-vm = { path = "../evmc-vm", version = "7.4.0" }
+evmc-vm = { path = "../evmc-vm", version = "7.4.0-rc2", package = "ssvm-evmc-vm" }
 
 [lib]
 proc-macro = true
